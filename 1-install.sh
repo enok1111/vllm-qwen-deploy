@@ -1,17 +1,21 @@
 #!/bin/bash
 source "$(dirname "$0")/config.sh"
 
-echo "🛠️ [1/2] Instalando dependencias del sistema y Docker..."
-sudo apt-get update
-sudo apt-get install -y build-essential cmake git libcurl4-openssl-dev libssl-dev aria2 docker.io docker-compose-plugin curl
+echo "🛠️ [1/3] Instalando dependencias del sistema..."
+apt-get update
+apt-get install -y python3-pip python3-venv python3-full aria2 build-essential
 
-# Configurar NVIDIA Container Toolkit
-echo "📦 [2/2] Configurando NVIDIA Container Toolkit..."
-distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
-curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
-curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
-sudo apt-get update && sudo apt-get install -y nvidia-container-toolkit
-sudo nvidia-ctk runtime configure --runtime=docker
-sudo systemctl restart docker
+echo "🐍 [2/3] Creando entorno virtual..."
+# Borrar si existe para evitar conflictos de instalaciones fallidas
+rm -rf "$VENV_DIR"
+python3 -m venv "$VENV_DIR"
 
-echo "✅ Instalación completada. Prueba con: docker run --rm --gpus all nvidia/cuda:12.4.1-base-ubuntu22.04 nvidia-smi"
+# Usar el pip del venv directamente para evitar PEP 668
+VENV_PIP="$VENV_DIR/bin/pip"
+
+echo "🚀 [3/3] Instalando vLLM en el entorno virtual (esto puede tardar)..."
+"$VENV_PIP" install --upgrade pip
+"$VENV_PIP" install vllm
+
+echo "✅ Instalación nativa completada."
+echo "Para verificar: $VENV_DIR/bin/python -c 'import vllm; print(vllm.__version__)'"
